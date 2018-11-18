@@ -14,7 +14,7 @@ this.XMMysql = {
 
     Initialize: function (mysql_server, mysql_username, mysql_password, mysql_database, mysql_connect, ShowErrors, m_Charset)
     {
-        if (ShowErrors === undefined)
+        if (this.ShowErrors === undefined)
             this.ShowErrors = false;
 
         this.MysqlObject = mysql.createConnection({
@@ -32,18 +32,21 @@ this.XMMysql = {
     },
     DestroySelf: function ()
     {
-        this.Disconnect();
-        this.XMMysql = undefined; //daf
+        Disconnect();
+        XMMysql = undefined;
     },
-    Connect: function () {
+    Connect: function (callbackfn) {
         if (this.IsInit === false)
             return false;
         this.MysqlObject.connect(function (error) {
             if (error)
-                return false;
-            this.IsConnected = true;
-            return true;
+                this.IsConnected = false;
+            else
+                this.IsConnected = true;
+            if (callbackfn !== undefined)
+                callbackfn(error);
         });
+        return true;
     },
     Disconnect: function () {
         this.MysqlObject.ping(function (error) {
@@ -52,7 +55,7 @@ this.XMMysql = {
         this.MysqlObject.destroy();
     },
 
-    Update: function (TableName, RequestArray, Where) {
+    Update: function (callbackfn, TableName, RequestArray, Where) {
         var RequestStr = 'UPDATE ' + TableName + ' SET ';
         var axCount = RequestArray.length - 1;
         var axValues = [];
@@ -66,22 +69,22 @@ this.XMMysql = {
             RequestStr += ' WHERE ' + Where.key + ' = ?';
             axValues.push(Where.value);
         }
-        this.MysqliObject.query(RequestStr, axValues, function (error) {
-            if (error)
-                return false;
-            return true;
+        this.MysqlObject.query(RequestStr, axValues, function (error) {
+            if (callbackfn !== undefined)
+                callbackfn(error);
         });
     },
-    Insert: function (TableName, RequestObject) {
+    Insert: function (callbackfn, TableName, RequestObject) {
         var RequestStr = 'INSERT INTO ' + TableName + ' SET ?';
-        this.MysqliObject.query(RequestStr, RequestObject, function (error) {
-            if (error)
-                return false;
-            return true;
+        this.MysqlObject.query(RequestStr, RequestObject, function (error) {
+            if (callbackfn !== undefined)
+                callbackfn(error);
         });
     },
-    Select: function (TableName, Where, Selection) {
-        var RequestStr = 'SELECT '+ Selection === undefined ? '*' : '??' +' FROM ??';
+    Select: function (callbackfn, TableName, Where, Selection) {
+        var RequestStr = 'SELECT ';
+        var apf = Selection === undefined ? '*' : '??';
+        RequestStr += apf + ' FROM ??';
         if (Where !== undefined)
             RequestStr += ' WHERE ?? = ?';
         var axReqParamArray = [];
@@ -90,32 +93,31 @@ this.XMMysql = {
         axReqParamArray.push(TableName);
         axReqParamArray.push(Where.key);
         axReqParamArray.push(Where.value);
-        this.MysqliObject.query(RequestStr, axReqParamArray, function (error, result) {
-            if (error)
-                return false;
-            return result;
+        console.log("request str : " + RequestStr);
+        console.log("request array : " + axReqParamArray);
+        this.MysqlObject.query(RequestStr, axReqParamArray, function (error, result) {
+            if (callbackfn !== undefined)
+                callbackfn(error ? error : result);
         });
     },
-    Delete: function (TableName, Where) {
+    Delete: function (callbackfn, TableName, Where) {
         var axBool = true;
         if (typeof Where.value === "number")
             axBool = false;
         var RequestStr = 'DELETE FROM ' + TableName + ' WHERE ' + Where.key + ' = ' + axBool ? '"' : '' + Where.value + axBool ? '"' : '';
-        this.MysqliObject.query(RequestStr, function (error) {
-            if (error)
-                return false;
-            return true;
+        this.MysqlObject.query(RequestStr, function (error) {
+            if (callbackfn !== undefined)
+                callbackfn(error);
         });
     },
-    Truncate: function (TableName) {
+    Truncate: function (callbackfn, TableName) {
         var RequestStr = 'TRUNCATE TABLE `' + TableName + '`';
-        this.MysqliObject.query(RequestStr, function (error) {
-            if (error)
-                return false;
-            return true;
+        this.MysqlObject.query(RequestStr, function (error) {
+            if (callbackfn !== undefined)
+                callbackfn(error);
         });
     },
     CleanStr: function (str) {
-        return this.MysqliObject.escape(str);
+        return this.MysqlObject.escape(str);
     }
 };
