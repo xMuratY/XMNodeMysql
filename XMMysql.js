@@ -30,11 +30,6 @@ this.XMMysql = {
         if (mysql_connect === true)
             return this.Connect();
     },
-    DestroySelf: function ()
-    {
-        Disconnect();
-        XMMysql = undefined;
-    },
     Connect: function (callbackfn) {
         if (this.IsInit === false)
             return false;
@@ -93,8 +88,6 @@ this.XMMysql = {
         axReqParamArray.push(TableName);
         axReqParamArray.push(Where.key);
         axReqParamArray.push(Where.value);
-        console.log("request str : " + RequestStr);
-        console.log("request array : " + axReqParamArray);
         this.MysqlObject.query(RequestStr, axReqParamArray, function (error, result) {
             if (callbackfn !== undefined)
                 callbackfn(error ? error : result);
